@@ -1,0 +1,81 @@
+<script>
+  import { onDestroy } from 'svelte';
+
+  export let modelValue = 0;
+  export let min = -Infinity;
+  export let max = Infinity;
+  export let step = 1;
+  export let disabled = false;
+  export let precision = 0;
+  export let size = ''; // 可以用于设置不同大小的样式
+  
+  let internalValue = modelValue;
+  let timer = null;
+
+  // 更新值并应用精度
+  function updateValue(newValue) {
+    let preciseValue = parseFloat(newValue.toFixed(precision));
+    if (preciseValue > max) preciseValue = max;
+    if (preciseValue < min) preciseValue = min;
+    internalValue = preciseValue;
+  }
+
+  // 增减函数
+  function increase() {
+    if (!disabled && internalValue + step <= max) {
+      updateValue(internalValue + step);
+    }
+  }
+
+  function decrease() {
+    if (!disabled && internalValue - step >= min) {
+      updateValue(internalValue - step);
+    }
+  }
+
+  // 按住按钮时连续增减
+  function startHold(action) {
+    action();
+    timer = setInterval(action, 150);
+  }
+
+  function stopHold() {
+    clearInterval(timer);
+  }
+
+  onDestroy(() => stopHold());
+</script>
+
+<div class={`inline-flex border border-gray-300 rounded ${size === 'small' ? 'h-8' : 'h-10'}`}>
+  <button
+    class="flex items-center justify-center w-8 bg-gray-100 hover:bg-gray-200 active:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+    on:mousedown={() => startHold(decrease)}
+    on:mouseup={stopHold}
+    on:mouseleave={stopHold}
+    disabled={disabled || internalValue <= min}
+  >
+    <span>-</span>
+  </button>
+  
+  <input
+    type="number"
+    bind:value={internalValue}
+    class="w-full text-center border-l border-r border-gray-300 outline-none focus:ring-1 focus:ring-blue-400 disabled:bg-gray-100"
+    on:input={() => updateValue(parseFloat(internalValue))}
+    disabled={disabled}
+  />
+  
+  <button
+    class="flex items-center justify-center w-8 bg-gray-100 hover:bg-gray-200 active:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+    on:mousedown={() => startHold(increase)}
+    on:mouseup={stopHold}
+    on:mouseleave={stopHold}
+    disabled={disabled || internalValue >= max}
+  >
+    <span>+</span>
+  </button>
+</div>
+
+<style>
+  /* 自定义样式可以根据 Element UI 的设计需求进行调整 */
+</style>
